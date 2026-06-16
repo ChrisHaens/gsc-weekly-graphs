@@ -341,7 +341,7 @@ def main():
     )
     args = parser.parse_args()
     
-    end = date.today() - timedelta(days=2)
+    end = date.today() - timedelta(days=3)
     start = end - timedelta(days=DAYS_BACK)
 
     start_str = start.isoformat()

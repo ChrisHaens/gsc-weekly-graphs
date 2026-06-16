@@ -1,6 +1,7 @@
 # GSC Weekly Graphs
 
 Ein Python-Tool zur Visualisierung von Google Search Console Metriken für mehrere Websites. Das Programm erstellt automatisch wöchentliche Diagramme mit Klicks und Impressionen über verschiedene Suchtypen (Web, News, Discover).
+Zur Nutzung in den Audience-Weekly-Meetings.
 
 ## Funktionsweise
 
