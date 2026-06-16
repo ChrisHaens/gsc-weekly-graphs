@@ -61,3 +61,10 @@ htmlcov/
 # Environment variables
 .env
 .env.local
+
+# Credentials and secrets (NEVER commit these!)
+gsc.json
+*.json
+!.vscode/*.json
+!.github/*.json
+rpm-rpd-*.json
