@@ -89,6 +89,22 @@ Lädt zusätzlich die Daten vom Vorjahr und zeigt diese als gestrichelte Linien 
 - **Impressionen (aktuell)**: gestrichelte grüne Linie (--)
 - **Impressionen (Vorjahr)**: gepunktete grüne Linie (:), halbtransparent
 
+### Mit Top-3-Performern je Kanal
+
+```bash
+python run.py --top-performers
+```
+
+Lädt zusätzlich für jede Publikation und jeden Kanal die Top-3-Seiten im gewählten Zeitraum und schreibt sie unter das jeweilige Einzeldiagramm. Zusätzlich wird eine CSV-Datei mit den Rankings im Wochenordner abgelegt.
+
+Für diese Liste wird immer nur die vorherige Kalenderwoche (Montag bis Sonntag) verwendet, auch wenn das Liniendiagramm selbst weiterhin den kompletten Standardzeitraum zeigt.
+
+Die Option kann mit dem Vorjahresvergleich kombiniert werden:
+
+```bash
+python run.py --previous-year --top-performers
+```
+
 ### Hilfe anzeigen
 
 ```bash
@@ -121,6 +137,7 @@ diagrams/
 
 - **Einzeldiagramme**: Ein Diagramm pro Website und Suchtyp (z.B. `RPO_WEB.png`)
 - **Kombiniertes Diagramm**: `combined_all_sites.png` - Übersicht über alle Websites in einem Bild
+- **Top-Performer CSV**: `top_performers.csv` - Top-3-Seiten pro Website und Kanal
 
 ### Diagramm-Features
 

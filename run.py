@@ -6,6 +6,11 @@ import matplotlib.pyplot as plt
 import os
 import argparse
 
+from gsc_top_performers import (
+    fetch_top_performers_for_all,
+    format_top_performers_text,
+)
+
 # --- CONFIG --------------------------------------------------------------
 
 ACCESS_JSON = "gsc.json"  # Pfad zu deinem Service-Account-JSON
@@ -236,7 +241,14 @@ def create_combined_plot(df: pd.DataFrame, show_previous_year: bool = False) -> 
     plt.close(fig)
 
 
-def plot_time_series(df: pd.DataFrame, site_label: str, panel_label: str, show_previous_year: bool = False) -> None:
+def plot_time_series(
+    df: pd.DataFrame,
+    site_label: str,
+    panel_label: str,
+    show_previous_year: bool = False,
+    top_performers_df: pd.DataFrame | None = None,
+    top_n: int = 3,
+) -> None:
     """
     Baut ein Diagramm (Clicks + Impressions über Zeit) und speichert es
     in DIAGRAM_DIR/{site_label}_{panel_label}.png
@@ -248,10 +260,19 @@ def plot_time_series(df: pd.DataFrame, site_label: str, panel_label: str, show_p
 
     subset["date"] = pd.to_datetime(subset["date"])
     subset = subset.sort_values("date")
+    highlight_start_str, highlight_end_str = get_previous_week_range(date.today())
+    highlight_start = pd.Timestamp(highlight_start_str)
+    highlight_end = pd.Timestamp(highlight_end_str)
+    highlight_subset = subset[
+        (subset["date"] >= highlight_start) & (subset["date"] <= highlight_end)
+    ].copy()
 
-    fig, ax1 = plt.subplots(figsize=(12, 4))
+    has_top_performers = top_performers_df is not None
+    fig, ax1 = plt.subplots(figsize=(12, 5.4 if has_top_performers else 4))
 
     ax1.plot(subset["date"], subset["clicks"], label="Klicks", linewidth=2)
+    if not highlight_subset.empty:
+        ax1.axvspan(highlight_start, highlight_end, color="#f6c85f", alpha=0.16)
     
     # Vorjahreswerte für Clicks wenn Flag gesetzt
     if show_previous_year:
@@ -320,12 +341,27 @@ def plot_time_series(df: pd.DataFrame, site_label: str, panel_label: str, show_p
     lines2, labels2 = ax2.get_legend_handles_labels()
     ax1.legend(lines1 + lines2, labels1 + labels2, loc="upper left")
 
-    plt.tight_layout()
+    if has_top_performers:
+        top_text = format_top_performers_text(top_performers_df, site_label, panel_label, top_n=top_n)
+        fig.subplots_adjust(bottom=0.30)
+        fig.text(0.02, 0.03, top_text, ha="left", va="bottom", fontsize=9)
+    else:
+        plt.tight_layout()
+
+    if has_top_performers:
+        plt.tight_layout(rect=[0, 0.22, 1, 1])
 
     filename = f"{site_label}_{panel_label}.png"
     out_path = os.path.join(DIAGRAM_DIR, filename)
     plt.savefig(out_path, dpi=150)
     plt.close(fig)
+
+
+def get_previous_week_range(reference_date: date) -> tuple[str, str]:
+    """Return Monday-Sunday date strings for the previous ISO week."""
+    previous_week_end = reference_date - timedelta(days=reference_date.isoweekday())
+    previous_week_start = previous_week_end - timedelta(days=6)
+    return previous_week_start.isoformat(), previous_week_end.isoformat()
 
 
 # --- MAIN ---------------------------------------------------------------
@@ -338,6 +374,11 @@ def main():
         "--previous-year",
         action="store_true",
         help="Zeigt Vorjahreswerte als gestrichelte Linien in den Diagrammen an"
+    )
+    parser.add_argument(
+        "--top-performers",
+        action="store_true",
+        help="Zeigt die Top 3 Performer pro Publikation und Kanal unterhalb der Einzeldiagramme an"
     )
     args = parser.parse_args()
     
@@ -390,11 +431,39 @@ def main():
     print("\nKachel-Übersicht (grobes Debugging):")
     print(summary)
 
+    top_performers_df = None
+    if args.top_performers:
+        top_start_str, top_end_str = get_previous_week_range(date.today())
+        print("\nLade Top-Performer pro Publikation und Kanal...")
+        print(f"Vorwochen-Zeitraum für Ranking: {top_start_str} bis {top_end_str}")
+        top_performers_df = fetch_top_performers_for_all(
+            service=service,
+            sites=SITES,
+            search_types=SEARCH_TYPES,
+            start_date=top_start_str,
+            end_date=top_end_str,
+            top_n=3,
+        )
+
+        if not top_performers_df.empty:
+            top_performers_path = os.path.join(DIAGRAM_DIR, "top_performers.csv")
+            top_performers_df.to_csv(top_performers_path, index=False, encoding="utf-8")
+            print(f"Top-Performer CSV: {top_performers_path}")
+        else:
+            print("Keine Top-Performer-Daten gefunden.")
+
     # Diagramme pro Site + Panel bauen
     for site_label in result["site_label"].unique():
         for panel_label in result["panel"].unique():
             print(f"Baue Diagramm für {site_label} / {panel_label} ...")
-            plot_time_series(result, site_label, panel_label, show_previous_year=args.previous_year)
+            plot_time_series(
+                result,
+                site_label,
+                panel_label,
+                show_previous_year=args.previous_year,
+                top_performers_df=top_performers_df,
+                top_n=3,
+            )
 
     print(f"Einzelne Diagramme liegen in: {DIAGRAM_DIR}")
     
