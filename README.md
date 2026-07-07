@@ -28,8 +28,10 @@ Das Programm holt täglich aggregierte Daten aus der Google Search Console API f
 ### Python-Pakete
 
 ```bash
-pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client pandas matplotlib
+pip install -r requirements.txt
 ```
+
+Enthalten sind die im Projekt verwendeten Bibliotheken für API-Zugriff, Diagramme, HTML-Titel-Abruf und Parquet-Cache.
 
 ## Setup
 
@@ -188,7 +190,7 @@ ACCESS_JSON = "gsc.json"  # Pfad zur Service Account JSON-Datei
 ### Import-Fehler
 
 ```bash
-pip install --upgrade google-auth google-api-python-client pandas matplotlib
+pip install --upgrade -r requirements.txt
 ```
 
 ## Struktur
